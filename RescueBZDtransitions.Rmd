@@ -2105,6 +2105,44 @@ changed_last_rescue_medication_2022 <- rescue_medication_data %>%
 
 
 
+Figure on the change from rectal diazepam to intranasal rescue medications
+```{r}
+# Data for figure 
+rescue_medication_data_for_figure <- rescue_medication_data %>% 
+  select(ENROLID, first_rescue_medication, last_rescue_medication, year_last_rescue) %>% 
+  group_by(year_last_rescue) %>% 
+  mutate(total_last_rescue_medications_per_year = n()) %>% 
+  ungroup() %>% 
+  group_by(year_last_rescue, last_rescue_medication) %>% 
+  mutate(proportion_rescue_medication = n() / total_last_rescue_medications_per_year) %>% 
+  distinct(year_last_rescue, last_rescue_medication, .keep_all=TRUE) %>% 
+  ungroup() %>% 
+  group_by(year_last_rescue) %>% 
+  arrange(desc(proportion_rescue_medication), .by_group=TRUE) %>% 
+  select(year_last_rescue, last_rescue_medication, proportion_rescue_medication) %>% 
+  collect()
+
+
+
+
+# Last rescue medication per year figure
+rescue_medication_use_per_year_plot <- ggplot(data=rescue_medication_data_for_figure,
+                                aes(x=year_last_rescue, y=proportion_rescue_medication, color=last_rescue_medication)) + 
+  scale_color_manual(values = c("rectal diazepam" = "red",
+                                "intranasal midazolam"="purple4",
+                                "intranasal diazepam"="greenyellow")) +
+  geom_line(lwd=1.5) + 
+  theme(legend.position="none", panel.background=element_blank(), panel.grid.major=element_blank(), panel.grid.minor=element_blank(), panel.border=element_blank(), axis.ticks=element_blank(),
+        axis.text=element_text(size=14, face="bold"), axis.text.x=element_text(angle=90, hjust=1),
+        axis.title=element_text(size=20, face="bold")) +
+  scale_x_continuous(name="Year", breaks=2019:2022) +
+  scale_y_continuous(name="Proportion", breaks=seq(0, 1, 0.2), limits = c(0, 1))
+rescue_medication_use_per_year_plot
+```
+
+
+
+
 Factors associated with switching
 ```{r}
 # Regression on change to intranasal
@@ -2204,6 +2242,196 @@ AWP_last_not_changed
 
 
 wilcox.test(rescue_medication_data[rescue_medication_data$change_first_last=="no", ]$first_rescue_AWP, rescue_medication_data[rescue_medication_data$change_first_last=="no", ]$last_rescue_AWP, alternative="two.sided", paired=TRUE)
+
+
+
+
+### Considering only brand-name diazepam
+
+# Restrict the data to only those with first rectal diazepam brand name
+rescue_medication_data_only_brand_name_initial_diazepam_data <- rescue_medication_data %>% 
+  filter(first_rescue_generic=="no") %>%
+  collect()
+
+# AWP of initial versus final rescue medication
+AWP_first_only_brand_name_initial_diazepam <- rescue_medication_data_only_brand_name_initial_diazepam_data %>% 
+  summarize(
+    median_AWP_first = median(first_rescue_AWP, na.rm=TRUE),
+    p25_AWP_first = quantile(first_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_first = quantile(first_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_first = mean(first_rescue_AWP, na.rm=TRUE),
+    SD_AWP_first = sd(first_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_first_only_brand_name_initial_diazepam
+
+
+AWP_last_only_brand_name_initial_diazepam <- rescue_medication_data_only_brand_name_initial_diazepam_data %>% 
+  summarize(
+    median_AWP_last = median(last_rescue_AWP, na.rm=TRUE),
+    p25_AWP_last = quantile(last_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_last = quantile(last_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_last = mean(last_rescue_AWP, na.rm=TRUE),
+    SD_AWP_last = sd(last_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_last_only_brand_name_initial_diazepam
+
+
+wilcox.test(rescue_medication_data_only_brand_name_initial_diazepam_data$first_rescue_AWP, rescue_medication_data_only_brand_name_initial_diazepam_data$last_rescue_AWP, alternative="two.sided", paired=TRUE)
+
+
+
+
+# AWP of initial versus rescue medication among those who changed
+AWP_first_changed_only_brand_name_initial_diazepam <- rescue_medication_data_only_brand_name_initial_diazepam_data %>% 
+  filter(change_first_last=="yes") %>% 
+  summarize(
+    median_AWP_first = median(first_rescue_AWP, na.rm=TRUE),
+    p25_AWP_first = quantile(first_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_first = quantile(first_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_first = mean(first_rescue_AWP, na.rm=TRUE),
+    SD_AWP_first = sd(first_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_first_changed_only_brand_name_initial_diazepam
+
+
+AWP_last_changed_only_brand_name_initial_diazepam <- rescue_medication_data_only_brand_name_initial_diazepam_data %>% 
+  filter(change_first_last=="yes") %>% 
+  summarize(
+    median_AWP_last = median(last_rescue_AWP, na.rm=TRUE),
+    p25_AWP_last = quantile(last_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_last = quantile(last_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_last = mean(last_rescue_AWP, na.rm=TRUE),
+    SD_AWP_last = sd(last_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_last_changed_only_brand_name_initial_diazepam
+
+
+wilcox.test(rescue_medication_data_only_brand_name_initial_diazepam_data[rescue_medication_data_only_brand_name_initial_diazepam_data$change_first_last=="yes", ]$first_rescue_AWP, rescue_medication_data_only_brand_name_initial_diazepam_data[rescue_medication_data_only_brand_name_initial_diazepam_data$change_first_last=="yes", ]$last_rescue_AWP, alternative="two.sided", paired=TRUE)
+
+
+
+
+# AWP of initial versus rescue medication among those who did not change
+AWP_first_not_changed_only_brand_name_initial_diazepam <- rescue_medication_data_only_brand_name_initial_diazepam_data %>% 
+  filter(change_first_last=="no") %>% 
+  summarize(
+    median_AWP_first = median(first_rescue_AWP, na.rm=TRUE),
+    p25_AWP_first = quantile(first_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_first = quantile(first_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_first = mean(first_rescue_AWP, na.rm=TRUE),
+    SD_AWP_first = sd(first_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_first_not_changed_only_brand_name_initial_diazepam
+
+
+AWP_last_not_changed_only_brand_name_initial_diazepam <- rescue_medication_data_only_brand_name_initial_diazepam_data %>% 
+  filter(change_first_last=="no") %>% 
+  summarize(
+    median_AWP_last = median(last_rescue_AWP, na.rm=TRUE),
+    p25_AWP_last = quantile(last_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_last = quantile(last_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_last = mean(last_rescue_AWP, na.rm=TRUE),
+    SD_AWP_last = sd(last_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_last_not_changed_only_brand_name_initial_diazepam
+
+
+wilcox.test(rescue_medication_data_only_brand_name_initial_diazepam_data[rescue_medication_data_only_brand_name_initial_diazepam_data$change_first_last=="no", ]$first_rescue_AWP, rescue_medication_data_only_brand_name_initial_diazepam_data[rescue_medication_data_only_brand_name_initial_diazepam_data$change_first_last=="no", ]$last_rescue_AWP, alternative="two.sided", paired=TRUE)
+
+
+
+
+### Considering only generic diazepam
+
+# Restrict the data to only those with first rectal diazepam generic
+rescue_medication_data_only_generic_initial_diazepam_data <- rescue_medication_data %>% 
+  filter(first_rescue_generic=="yes") %>%
+  collect()
+
+# AWP of initial versus final rescue medication
+AWP_first_only_generic_initial_diazepam <- rescue_medication_data_only_generic_initial_diazepam_data %>% 
+  summarize(
+    median_AWP_first = median(first_rescue_AWP, na.rm=TRUE),
+    p25_AWP_first = quantile(first_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_first = quantile(first_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_first = mean(first_rescue_AWP, na.rm=TRUE),
+    SD_AWP_first = sd(first_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_first_only_generic_initial_diazepam
+
+
+AWP_last_only_generic_initial_diazepam <- rescue_medication_data_only_generic_initial_diazepam_data %>% 
+  summarize(
+    median_AWP_last = median(last_rescue_AWP, na.rm=TRUE),
+    p25_AWP_last = quantile(last_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_last = quantile(last_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_last = mean(last_rescue_AWP, na.rm=TRUE),
+    SD_AWP_last = sd(last_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_last_only_generic_initial_diazepam
+
+
+wilcox.test(rescue_medication_data_only_generic_initial_diazepam_data$first_rescue_AWP, rescue_medication_data_only_generic_initial_diazepam_data$last_rescue_AWP, alternative="two.sided", paired=TRUE)
+
+
+
+
+# AWP of initial versus rescue medication among those who changed
+AWP_first_changed_only_generic_initial_diazepam <- rescue_medication_data_only_generic_initial_diazepam_data %>% 
+  filter(change_first_last=="yes") %>% 
+  summarize(
+    median_AWP_first = median(first_rescue_AWP, na.rm=TRUE),
+    p25_AWP_first = quantile(first_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_first = quantile(first_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_first = mean(first_rescue_AWP, na.rm=TRUE),
+    SD_AWP_first = sd(first_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_first_changed_only_generic_initial_diazepam
+
+
+AWP_last_changed_only_generic_initial_diazepam <- rescue_medication_data_only_generic_initial_diazepam_data %>% 
+  filter(change_first_last=="yes") %>% 
+  summarize(
+    median_AWP_last = median(last_rescue_AWP, na.rm=TRUE),
+    p25_AWP_last = quantile(last_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_last = quantile(last_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_last = mean(last_rescue_AWP, na.rm=TRUE),
+    SD_AWP_last = sd(last_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_last_changed_only_generic_initial_diazepam
+
+
+wilcox.test(rescue_medication_data_only_generic_initial_diazepam_data[rescue_medication_data_only_generic_initial_diazepam_data$change_first_last=="yes", ]$first_rescue_AWP, rescue_medication_data_only_generic_initial_diazepam_data[rescue_medication_data_only_generic_initial_diazepam_data$change_first_last=="yes", ]$last_rescue_AWP, alternative="two.sided", paired=TRUE)
+
+
+
+
+# AWP of initial versus rescue medication among those who did not change
+AWP_first_not_changed_only_generic_initial_diazepam <- rescue_medication_data_only_generic_initial_diazepam_data %>% 
+  filter(change_first_last=="no") %>% 
+  summarize(
+    median_AWP_first = median(first_rescue_AWP, na.rm=TRUE),
+    p25_AWP_first = quantile(first_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_first = quantile(first_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_first = mean(first_rescue_AWP, na.rm=TRUE),
+    SD_AWP_first = sd(first_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_first_not_changed_only_generic_initial_diazepam
+
+
+AWP_last_not_changed_only_generic_initial_diazepam <- rescue_medication_data_only_generic_initial_diazepam_data %>% 
+  filter(change_first_last=="no") %>% 
+  summarize(
+    median_AWP_last = median(last_rescue_AWP, na.rm=TRUE),
+    p25_AWP_last = quantile(last_rescue_AWP, 0.25, na.rm=TRUE),
+    p75_AWP_last = quantile(last_rescue_AWP, 0.75, na.rm=TRUE),
+    mean_AWP_last = mean(last_rescue_AWP, na.rm=TRUE),
+    SD_AWP_last = sd(last_rescue_AWP, na.rm=TRUE)) %>% 
+  collect()
+AWP_last_not_changed_only_generic_initial_diazepam
+
+
+wilcox.test(rescue_medication_data_only_generic_initial_diazepam_data[rescue_medication_data_only_generic_initial_diazepam_data$change_first_last=="no", ]$first_rescue_AWP, rescue_medication_data_only_generic_initial_diazepam_data[rescue_medication_data_only_generic_initial_diazepam_data$change_first_last=="no", ]$last_rescue_AWP, alternative="two.sided", paired=TRUE)
 ```
 
 
