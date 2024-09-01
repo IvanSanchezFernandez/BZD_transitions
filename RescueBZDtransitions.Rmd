@@ -70,7 +70,7 @@ library(survival)
 Create the connection to the database
 ```{r}
 # Create the connection to the MarketScan database
-MarketScan <- DBI::dbConnect(RSQLite::SQLite(), "D:\\MarketScan\\MarketScan.db")
+MarketScan <- DBI::dbConnect(RSQLite::SQLite(), "E:\\MarketScan\\MarketScan.db")
 src_dbi(MarketScan)
 ```
 
@@ -2136,7 +2136,7 @@ rescue_medication_use_per_year_plot <- ggplot(data=rescue_medication_data_for_fi
         axis.text=element_text(size=14, face="bold"), axis.text.x=element_text(angle=90, hjust=1),
         axis.title=element_text(size=20, face="bold")) +
   scale_x_continuous(name="Year", breaks=2019:2022) +
-  scale_y_continuous(name="Proportion", breaks=seq(0, 1, 0.2), limits = c(0, 1))
+  scale_y_continuous(name="Proportion of Patients \n Transitioning from Rectal \n to Intranasal Benzodiazepines", breaks=seq(0, 1, 0.2), limits = c(0, 1))
 rescue_medication_use_per_year_plot
 ```
 
